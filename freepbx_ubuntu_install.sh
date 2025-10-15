@@ -598,7 +598,7 @@ check_kernel_compatibility() {
 }
 
 refresh_signatures() {
-  fwconsole ma refreshsignatures >> "$log"
+  /usr/sbin/fwconsole ma refreshsignatures >> "$log"
 }
 
 check_services() {
@@ -643,7 +643,7 @@ check_php_version() {
 }
 
 verify_module_status() {
-    modules_list=$(fwconsole ma list | grep -Ewv "Enabled|----|Module|No repos")
+    modules_list=$(/usr/sbin/fwconsole ma list | grep -Ewv "Enabled|----|Module|No repos")
     if [ -z "$modules_list" ]; then
         message "All Modules are Enabled."
     else
@@ -673,7 +673,7 @@ inspect_network_ports() {
     for (( i=0; i<${#ports_services[@]}; i+=2 )); do
         port="${ports_services[i]}"
         service="${ports_services[i+1]}"
-        port_set=$(fwconsole sa ports | grep "$service" | cut -d'|' -f 2 | tr -d '[:space:]')
+        port_set=$(/usr/sbin/fwconsole sa ports | grep "$service" | cut -d'|' -f 2 | tr -d '[:space:]')
 
         if [ "$port_set" == "$port" ]; then
             message "$service module is assigned to its default port."
@@ -684,7 +684,7 @@ inspect_network_ports() {
 }
 
 inspect_running_processes() {
-    processes=$(fwconsole pm2 --list |  grep -Ewv "online|----|Process")
+    processes=$(/usr/sbin/fwconsole pm2 --list |  grep -Ewv "online|----|Process")
     if [ -z "$processes" ]; then
         message "No Offline Processes found."
     else
@@ -703,7 +703,7 @@ check_freepbx() {
         	inspect_network_ports
 	fi
         inspect_running_processes
-        inspect_job_status=$(fwconsole job --list)
+        inspect_job_status=$(/usr/sbin/fwconsole job --list)
         message "Job list : $inspect_job_status"
     fi
 }
@@ -1252,25 +1252,25 @@ else
   # Check if only opensource required then remove the commercial modules
   if [ "$opensourceonly" ]; then
     setCurrentStep "Removing commercial modules"
-    fwconsole ma list | awk '/Commercial/ {print $2}' | xargs -t -I {} fwconsole ma -f remove {} >> "$log"
+    /usr/sbin/fwconsole ma list | awk '/Commercial/ {print $2}' | xargs -t -I {} /usr/sbin/fwconsole ma -f remove {} >> "$log"
     # Remove firewall module also because it depends on commercial sysadmin module
-    fwconsole ma -f remove firewall >> "$log" || true
+    /usr/sbin/fwconsole ma -f remove firewall >> "$log" || true
   fi
 
   if [ "$dahdi" ]; then
-    fwconsole ma downloadinstall dahdiconfig >> "$log"
+    /usr/sbin/fwconsole ma downloadinstall dahdiconfig >> "$log"
     echo 'export PERL5LIB=$PERL5LIB:/etc/wanpipe/wancfg_zaptel' | sudo tee -a /root/.bashrc
   fi
 
   setCurrentStep "Installing all local modules"
-  fwconsole ma installlocal >> "$log"
+  /usr/sbin/fwconsole ma installlocal >> "$log"
 
   setCurrentStep "Upgrading FreePBX 17 modules"
-  fwconsole ma upgradeall >> "$log"
+  /usr/sbin/fwconsole ma upgradeall >> "$log"
 
   setCurrentStep "Reloading and restarting FreePBX 17"
-  fwconsole reload >> "$log"
-  fwconsole restart >> "$log"
+  /usr/sbin/fwconsole reload >> "$log"
+  /usr/sbin/fwconsole restart >> "$log"
 
   if [ "$opensourceonly" ]; then
     # Uninstall the sysadmin helper package for the sysadmin commercial module
@@ -1353,7 +1353,7 @@ if [ ! "$nofpbx" ]; then
     if [ $exit_status -eq 0 ]; then
       break
     else
-      log "Command 'fwconsole ma refreshsignatures' failed to execute with exit status $exit_status, running as a background job"
+      log "Command '/usr/sbin/fwconsole ma refreshsignatures' failed to execute with exit status $exit_status, running as a background job"
       refresh_signatures &
       log "Continuing the remaining script execution"
       break
@@ -1387,5 +1387,5 @@ message "Finished FreePBX 17 installation process for $host $kernel"
 message "Join us on the FreePBX Community Forum: https://community.freepbx.org/ ";
 
 if [ ! "$nofpbx" ] ; then
-  fwconsole motd
+  /usr/sbin/fwconsole motd
 fi
