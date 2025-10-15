@@ -21,9 +21,7 @@ jobs:
 
       # Descargar e instalar el FreePBX con todas sus dependencias
       - name: Descargar e instalar el FreePBX
-        run: |
-          wget https://github.com/FreePBX/sng_freepbx_debian_install/raw/master/sng_freepbx_debian_install.sh -O /tmp/sng_freepbx_debian_install.sh
-          bash /tmp/sng_freepbx_debian_install.sh
+        run: bash freepbx_ubuntu_install.sh
           
       # Ver los logs de la instalación
       - name: Ver los logs
