@@ -167,7 +167,7 @@ compare_version() {
 
 check_version() {
     # Fetching latest version and checksum
-    REPO_URL="https://github.com/enmanuelbasulto/FreePBX/raw/master"
+    REPO_URL="https://github.com/enmanuelbasulto/FreePBX/raw/refs/heads/main"
     wget -O /tmp/freepbx_ubuntu_install_latest_from_github.sh "$REPO_URL/freepbx_ubuntu_install.sh" >> "$log"
 
     latest_version=$(grep '^SCRIPTVER="' /tmp/freepbx_ubuntu_install_latest_from_github.sh | awk -F'"' '{print $2}')
