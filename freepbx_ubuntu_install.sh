@@ -950,7 +950,7 @@ DEPPRODPKGS=(
 	# Asterisk package
 	"liburiparser1"
 	# ffmpeg package
-	"libavdevice59"
+	"libavdevice60"
 	# System Admin module
 	"python3-mysqldb"
 	"python-is-python3"
