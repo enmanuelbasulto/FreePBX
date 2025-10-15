@@ -959,7 +959,7 @@ DEPPRODPKGS=(
 	"libicu-dev"
 	"libsrtp2-1"
 	"libspandsp2"
-	"libncurses5"
+	"libncurses6"
 	"autoconf"
 	"libical3"
 	"libneon27"
