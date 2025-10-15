@@ -21,8 +21,8 @@ jobs:
 
       # Descargar e instalar el FreePBX con todas sus dependencias
       - name: Descargar e instalar el FreePBX
-        run: bash freepbx_ubuntu_install.sh
+        run: sudo bash freepbx_ubuntu_install.sh
           
       # Ver los logs de la instalación
       - name: Ver los logs
-        run: tail -f /var/log/pbx/freepbx17-install.log
+        run: sudo tail -f /var/log/pbx/freepbx17-install.log
