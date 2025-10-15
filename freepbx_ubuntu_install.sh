@@ -138,12 +138,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 
-block_debian13_trixie_update() {
-}
-
-fix_debian12_repo() {
-}
-
+block_debian13_trixie_update()
+fix_debian12_repo()
 
 if [ -n "$disableDebUpdateToV13" ]; then
 	    # Fix current debian repo to point to bookworm
