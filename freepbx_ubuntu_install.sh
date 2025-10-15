@@ -139,17 +139,9 @@ done
 
 
 block_debian13_trixie_update() {
-	cat >/etc/apt/preferences.d/99-block-trixie.pref <<'EOF'
-# Block Debian 13 Trixie
-Package: *
-Pin: release n=trixie
-Pin-Priority: -1
-
-EOF
 }
 
 fix_debian12_repo() {
-    done
 }
 
 
