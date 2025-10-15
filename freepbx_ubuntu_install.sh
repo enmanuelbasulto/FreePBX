@@ -167,14 +167,14 @@ compare_version() {
 
 check_version() {
     # Fetching latest version and checksum
-    REPO_URL="https://github.com/FreePBX/sng_freepbx_debian_install/raw/master"
-    wget -O /tmp/sng_freepbx_debian_install_latest_from_github.sh "$REPO_URL/sng_freepbx_debian_install.sh" >> "$log"
+    REPO_URL="https://github.com/enmanuelbasulto/FreePBX/raw/master"
+    wget -O /tmp/freepbx_ubuntu_install_latest_from_github.sh "$REPO_URL/freepbx_ubuntu_install.sh" >> "$log"
 
-    latest_version=$(grep '^SCRIPTVER="' /tmp/sng_freepbx_debian_install_latest_from_github.sh | awk -F'"' '{print $2}')
-    latest_checksum=$(sha256sum /tmp/sng_freepbx_debian_install_latest_from_github.sh | awk '{print $1}')
+    latest_version=$(grep '^SCRIPTVER="' /tmp/freepbx_ubuntu_install_latest_from_github.sh | awk -F'"' '{print $2}')
+    latest_checksum=$(sha256sum /tmp/freepbx_ubuntu_install_latest_from_github.sh | awk '{print $1}')
 
     # Cleaning up downloaded file
-    rm -f /tmp/sng_freepbx_debian_install_latest_from_github.sh
+    rm -f /tmp/freepbx_ubuntu_install_latest_from_github.sh
 
     compare_version $SCRIPTVER "$latest_version"
 
