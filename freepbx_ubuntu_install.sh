@@ -137,15 +137,7 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
-
-block_debian13_trixie_update()
-fix_debian12_repo()
-
 if [ -n "$disableDebUpdateToV13" ]; then
-	    # Fix current debian repo to point to bookworm
-	    fix_debian12_repo
-	    # Block Debian 13/Trixie update because currently FreePBX only supports Debian 12/Bookworm 
-	    block_debian13_trixie_update
 	    echo "Debian repositories have been updated to use the Bookworm (Debian 12) sources."
 	    echo "The script is exiting now because the '--disable-deb-update-v13' option was used."
 	    echo "This option is intended only for updating the APT sources without proceeding with a full installation."
@@ -353,11 +345,6 @@ setup_repositories() {
 	     else
 		     echo "Bookworm main repo already exists: $REPO_LINE" >> "$log"
 	     fi			
-
-	    # Fix current debian repo to point to bookworm
-	    fix_debian12_repo
-	    # Block Debian 13/Trixie update because currently FreePBX only supports Debian 12/Bookworm 
-	    block_debian13_trixie_update
 	fi
 
 	apt-get update >> "$log"
