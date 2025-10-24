@@ -1,6 +1,6 @@
 #!/bin/bash
 #####################################################################################
-# * Copyright 2024 by Sangoma Technologies
+# * Copyright 2025 by Sangoma Technologies
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 3.0
@@ -11,9 +11,9 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# @author kgupta@sangoma.com
+# @author kgupta@sangoma.com, enmanuelbasulto@pm.me
 #
-# This FreePBX install script and all concepts are property of
+# The concepts applied in this script are property of
 # Sangoma Technologies.
 # This install script is free to use for installing FreePBX
 # along with dependent packages only but carries no guarantee on performance
@@ -40,11 +40,11 @@ fi
 # Fallback to checking /etc/debian_version numerically
 if [ -z "$UBUNTU_OS_VERSION" ] && [ -f /etc/debian_version ]; then
     case "$(cat /etc/debian_version)" in
-        12*|bookworm)
-            UBUNTU_OS_VERSION="bookworm"
+        24.04*|noble)
+            UBUNTU_OS_VERSION="noble"
             ;;
-        13*|trixie)
-            UBUNTU_OS_VERSION="trixie"
+        22.04*|noble)
+            UBUNTU_OS_VERSION="noble"
             ;;
         *)
             UBUNTU_OS_VERSION="unknown"
@@ -54,14 +54,14 @@ fi
 
 # Only allow Ubuntu 24.04 (noble)
 if [ "$UBUNTU_OS_VERSION" != "noble" ]; then
-    echo "Unsupported OS version. This script supports only Ubuntu 24.04 (noble). Detected: $UBUNTU_OS_VERSION"
+    echo "Versión del sistema operativo no soportada. Este script soporta exclusivamente Ubuntu 24.04 (noble). Detectado: $UBUNTU_OS_VERSION"
     exit 1
 fi
 
 
 # Check for root privileges
 if [[ $EUID -ne 0 ]]; then
-   echo "This script must be run as root"
+   echo "Este script debe ser ejecutado como root"
    exit 1
 fi
 
@@ -127,11 +127,11 @@ while [[ $# -gt 0 ]]; do
       shift; shift # past argument
       ;;
 		-*)
-			echo "Unknown option $1"
+			echo "Opción desconocida $1"
 			exit 1
 			;;
 		*)
-			echo "Unknown argument \"$1\""
+			echo "Argumento desconocido \"$1\""
 			exit 1
 			;;
 	esac
@@ -198,7 +198,7 @@ check_version() {
                         echo "Use '$0 --skipversion' to skip the version check"
                         exit 0
                 else
-                        echo "Perfect! You're already running the latest version."
+                        echo "Perfecto! Ya está corriendo la última versión del script."
                 fi
             ;;
         esac
@@ -227,19 +227,19 @@ setCurrentStep () {
 terminate() {
 	# display last 10 lines of the log file on abnormal exits
 	if [ $? -ne 0 ]; then
-		echo_ts "Displaying last 10 lines from the log file"
+		echo_ts "Mostrando las últimas 10 líneas del fichero de logs"
 		tail -n 10 "$LOG_FILE"
 	fi
 	# removing pid file
 	rm -f "$pidfile"
-	message "Exiting script"
+	message "Saliendo del script"
 }
 
 #Function to log error and location
 errorHandler() {
-	log "****** INSTALLATION FAILED *****"
-	echo_ts "Installation failed at step ${currentStep}. Please check log ${LOG_FILE} for details."
-	log "Error at line: $1 exiting with code $2 (last command was: $3)"
+	log "****** INSTALACIÓN FALLIDA ******"
+	echo_ts "La instalación ha fallado en el paso ${currentStep}. Por favor, revise el log en ${LOG_FILE} para conocer más detalles."
+	log "Error en la línea: $1 saliendo con código $2 (el último comando fue: $3)"
 	exit "$2"
 }
 
@@ -260,13 +260,13 @@ pkg_install() {
     if isinstalled "${PKG[@]}"; then
         log "${PKG[*]} already present ...."   # Use * to join the array into a string
     else
-        message "Installing ${PKG[*]} ...."
+        message "Instalando ${PKG[*]} ...."
         apt-get -y --ignore-missing -o DPkg::Options::="--force-confnew" -o Dpkg::Options::="--force-overwrite" install "${PKG[@]}" >> "$log"
         if isinstalled "${PKG[@]}"; then
-            message "${PKG[*]} installed successfully...."
+            message "${PKG[*]} instalado correctamente...."
         else
-            message "${PKG[*]} failed to install ...."
-            message "Exiting the installation process as dependent ${PKG[*]} failed to install ...."
+            message "${PKG[*]} falló al instalar ...."
+            message "Saliendo del proceso de instalación porque la dependencia ${PKG[*]} fallo al instalar ...."
             terminate
         fi
     fi
@@ -329,9 +329,9 @@ setup_repositories() {
 	# Only add the line if it's not already present
 	if ! grep -qsF "$REPO_LINE" "$REPO_FILE" 2>/dev/null; then
 		echo "$REPO_LINE" | tee -a "$REPO_FILE" >> "$log"
-		echo "Added FreePBX repo: $REPO_LINE" >> "$log"
+		echo "Agregado el repositorio de FreePBX: $REPO_LINE" >> "$log"
 	else
-		echo "FreePBX repo already exists: $REPO_LINE" >> "$log"
+		echo "El repositorio de FreePBX ya existe: $REPO_LINE" >> "$log"
 	fi
 
 	if [ -z "$noaac" ]; then
@@ -341,15 +341,15 @@ setup_repositories() {
 	     # Only add if the line doesn't already exist
 	     if ! grep -qsF "$REPO_LINE" "$REPO_FILE"; then
 		     echo "$REPO_LINE" | tee -a "$REPO_FILE" >> "$log"
-		     echo "Added Bookworm main repo: $REPO_LINE" >> "$log"
+		     echo "Agregado el repositorio principal de Ubuntu noble: $REPO_LINE" >> "$log"
 	     else
-		     echo "Bookworm main repo already exists: $REPO_LINE" >> "$log"
+		     echo "El repositorio principal de Ubuntu noble ya existe: $REPO_LINE" >> "$log"
 	     fi			
 	fi
 
 	apt-get update >> "$log"
 
-	setCurrentStep "Setting up Sangoma repository"
+	setCurrentStep "Estableciendo el repositorio de Sangoma"
     local aptpref="/etc/apt/preferences.d/99sangoma-fpbx-repository"
     cat <<EOF> $aptpref
 Package: *
@@ -373,7 +373,7 @@ create_post_apt_script() {
         rm -f /usr/bin/post-apt-run
     fi
 
-    message "Creating script to run post every apt command is finished executing"
+    message "Creando el script para correr luego de la ejecución de cada comando de apt"
     {
         echo "#!/bin/bash"
         echo ""
@@ -485,11 +485,11 @@ check_kernel_compatibility() {
     fi
 
     if [ "$testrepo" ]; then
-        message "Skipping Kernel Check. As Kernel Check is not required for testing repo....."
+        message "Saltándose la verificación del kernel. La verificación no es requerida para el repositorio de pruebas....."
         return
     fi
 
-    message "Creating kernel check script to allow proper kernel upgrades"
+    message "Creando el script de verificación del kernel para permitir la actualización del kernel más apropiado"
     {
         echo "#!/bin/bash"
         echo ""
@@ -606,7 +606,7 @@ check_services() {
     for service in "${services[@]}"; do
         service_status=$(systemctl is-active "$service")
         if [[ "$service_status" != "active" ]]; then
-            message "Service $service is not active. Please ensure it is running."
+            message "El servicio $service no está activo. Por favor, asegúrese de que esté corriendo."
         fi
     done
 
@@ -614,30 +614,30 @@ check_services() {
     if [[ "$apache2_status" == "active" ]]; then
         apache_process=$(netstat -anp | awk '$4 ~ /:80$/ {sub(/.*\//,"",$7); print $7}')
         if [ "$apache_process" == "apache2" ]; then
-            message "Apache2 service is running on port 80."
+            message "Apache2 está escuchando en el puerto 80."
         else
-            message "Apache2 is not running in port 80."
+            message "Apache2 no está escuchando en el puerto 80."
         fi
     else
-        message "The Apache2 service is not active. Please activate the service"
+        message "El servicio de Apache2 no está activo. Por favor, active el servicio"
     fi
 }
 
 check_php_version() {
     php_version=$(php -v | grep built: | awk '{print $2}')
     if [[ "${php_version:0:3}" == "8.2" ]]; then
-        message "Installed PHP version $php_version is compatible with FreePBX."
+        message "La versión instalada de PHP $php_version es compatible con FreePBX."
     else
-        message "Installed PHP version  $php_version is not compatible with FreePBX. Please install PHP version '8.2.x'"
+        message "La versión instalada de PHP $php_version no es compatible con FreePBX. Por favor, instale la versión '8.2.x' de PHP."
     fi
 
     # Checking whether enabled PHP modules are of PHP 8.2 version
     php_module_version=$(a2query -m | grep php | awk '{print $1}')
 
     if [[ "$php_module_version" == "php8.2" ]]; then
-       log "The PHP module version $php_module_version is compatible with FreePBX. Proceeding with the script."
+       log "La versión instalada del módulo de PHP $php_module_version es compatible con FreePBX. Continuando con la ejecución del script."
     else
-       log "The installed PHP module version $php_module_version is not compatible with FreePBX. Please install PHP version '8.2'."
+       log "La versión instalada del módulo de PHP $php_module_version no es compatible con FreePBX. Por favor, instálelo para la versión '8.2' de PHP."
        exit 1
     fi
 }
@@ -645,9 +645,9 @@ check_php_version() {
 verify_module_status() {
     modules_list=$(/usr/sbin/fwconsole ma list | grep -Ewv "Enabled|----|Module|No repos")
     if [ -z "$modules_list" ]; then
-        message "All Modules are Enabled."
+        message "Todos los módulos están habilitados."
     else
-        message "List of modules which are not Enabled:"
+        message "Lista de módulos que están deshabilitados:"
         message "$modules_list"
     fi
 }
@@ -676,9 +676,9 @@ inspect_network_ports() {
         port_set=$(/usr/sbin/fwconsole sa ports | grep "$service" | cut -d'|' -f 2 | tr -d '[:space:]')
 
         if [ "$port_set" == "$port" ]; then
-            message "$service module is assigned to its default port."
+            message "El módulo $service tiene asignado su puerto por defecto."
         else
-            message "$service module is expected to have port $port assigned instead of $port_set"
+            message "El módulo $service debe tener asignado el puerto $port en vez del $port_set"
         fi
     done
 }
@@ -686,9 +686,9 @@ inspect_network_ports() {
 inspect_running_processes() {
     processes=$(/usr/sbin/fwconsole pm2 --list |  grep -Ewv "online|----|Process")
     if [ -z "$processes" ]; then
-        message "No Offline Processes found."
+        message "No se han encontrado procesos Offline."
     else
-        message "List of Offline processes:"
+        message "Lista de procesos Offline:"
         message "$processes"
     fi
 }
@@ -696,7 +696,7 @@ inspect_running_processes() {
 check_freepbx() {
      # Check if FreePBX is installed
     if ! dpkg -l | grep -q 'freepbx'; then
-        message "FreePBX is not installed. Please install FreePBX to proceed."
+        message "FreePBX no está instalado. Por favor, instálelo para continuar."
     else
         verify_module_status
 	if [ ! "$opensourceonly" ] ; then
@@ -715,25 +715,25 @@ check_digium_phones_version() {
         present_version=$(echo "$installed_version" | sed 's/_/./g')
         required_version=$(echo "$required_version" | sed 's/_/./g')
         if dpkg --compare-versions "$present_version" "lt" "$required_version"; then
-            message "A newer version of Digium Phones module is available."
+            message "Una versión más nueva del módulo Digium Phones está disponible."
         else
-            message "Installed Digium Phones module version: ($installed_version)"
+            message "Versión del módulo Digium Phones instalada: ($installed_version)"
         fi
     else
-        message "Failed to check Digium Phones module version."
+        message "Fallo al verificar la versión del módulo Digium Phones."
     fi
 }
 
 check_asterisk() {
     if ! dpkg -l | grep -q 'asterisk'; then
-        message "Asterisk is not installed. Please install Asterisk to proceed."
+        message "Asterisk no está instalado. Por favor, instálelo para continuar."
     else
         check_asterisk_version=$(asterisk -V)
         message "$check_asterisk_version"
 	if asterisk -rx "module show" | grep -q "res_digium_phone.so"; then
             check_digium_phones_version
         else
-            message "Digium Phones module is not loaded. Please make sure it is installed and loaded correctly."
+            message "El módulo de Digium Phones no ha sido cargado. Por favor, asegúrese de que está instalado y cargado correctamente."
         fi
     fi
 }
@@ -762,32 +762,32 @@ pkg_install wget
 
 # Script version check
 if [[ $skipversion ]]; then
-    message "Skipping version check..."
+    message "Saltando el chequeo de versión..."
 else
     # Perform version check if --skipversion is not provided
-    message "Performing version check..."
+    message "Realizando el chequeo de versión..."
     check_version
 fi
 
 # Check if running in a Container
 if systemd-detect-virt --container &> /dev/null; then
-	message "Running in a Container. Skipping Chrony installation."
+	message "Estamos corriendo en un Contenedor. Saltando la instalación de Chrony."
 	nochrony=true
 fi
 
 # Check if we are running on a 64-bit system
 ARCH=$(dpkg --print-architecture)
 if [ "$ARCH" != "amd64" ]; then
-    message "FreePBX 17 installation can only be made on a 64-bit (amd64) system!"
-    message "Current System's Architecture: $ARCH"
+    message "La instalación de FreePBX 17 solo puede hacerse en sistemas a 64-bits (amd64)!"
+    message "Acquitectura del sistema actual: $ARCH"
     exit 1
 fi
 
 # Check if hostname command succeeded and FQDN is not empty
 if [ -z "$fqdn" ]; then
-    echo "Fully qualified domain name (FQDN) is not set correctly."
-    echo "Please set the FQDN for this system and re-run the script."
-    echo "To set the FQDN, update the /etc/hostname and /etc/hosts files."
+    echo "El nombre del servidor (FQDN) no se ha configurado correctamente."
+    echo "Por favor, establezca el FQDN para este sistema y vuelva a correr este script."
+    echo "Para configurar el FQDN, actualice los ficheros /etc/hostname y /etc/hosts."
     exit 1
 fi
 
@@ -797,25 +797,25 @@ pidfile='/var/run/freepbx17_installer.pid'
 if [ -f "$pidfile" ]; then
 	old_pid=$(cat "$pidfile")
 	if ps -p "$old_pid" > /dev/null; then
-		message "FreePBX 17 installation process is already going on (PID=$old_pid), hence not starting new process"
+		message "El proceso de instalación de FreePBX 17 ya está corriendo en (PID=$old_pid), por lo tanto no vamos a iniciar otro"
 		exit 1
 	else
-		log "Removing stale PID file"
+		log "Removiendo el fichero de PID colgante"
 		rm -f "${pidfile}"
 	fi
 fi
 echo "$$" > "$pidfile"
 
-setCurrentStep "Starting installation."
+setCurrentStep "Iniciando la instalación."
 trap 'errorHandler "$LINENO" "$?" "$BASH_COMMAND"' ERR
 trap "terminate" EXIT
 
 start=$(date +%s)
-message "  Starting FreePBX 17 installation process for $host $kernel"
-message "  Please refer to the $log to know the process..."
-log "  Executing script v$SCRIPTVER ..."
+message "  Iniciando el preoceso de instalación de FreePBX 17 en $host $kernel"
+message "  Por favor, refiérase al log $log para ver el estado del proceso..."
+log "  Ejecutando el script v$SCRIPTVER ..."
 
-setCurrentStep "Making sure installation is sane"
+setCurrentStep "Asegurándose de que la instalación esté sana"
 # Fixing broken install
 apt-get -y --fix-broken install >> "$log"
 apt-get autoremove -y >> "$log"
@@ -824,13 +824,13 @@ apt-get autoremove -y >> "$log"
 if grep -q "^deb cdrom" /etc/apt/sources.list; then
   # Comment out the CD-ROM repository line in the sources.list file
   sed -i '/^deb cdrom/s/^/#/' /etc/apt/sources.list
-  message "Commented out CD-ROM repository in sources.list"
+  message "Se ha comentado el repositorio CD-ROM en sources.list"
 fi
 
 apt-get update >> "$log"
 
 # Adding iptables and postfix  inputs so "iptables-persistent" and postfix will not ask for the input
-setCurrentStep "Setting up default configuration"
+setCurrentStep "Estableciendo la configuración por defecto"
 debconf-set-selections <<EOF
 iptables-persistent iptables-persistent/autosave_v4 boolean true
 iptables-persistent iptables-persistent/autosave_v6 boolean true
@@ -840,24 +840,24 @@ echo "postfix postfix/main_mailer_type string 'Internet Site'" | debconf-set-sel
 
 pkg_install gnupg
 
-setCurrentStep "Setting up repositories"
+setCurrentStep "Estableciendo repositorios de software"
 setup_repositories
 
 lat_dahdi_supp_ver=$(apt-cache search dahdi | grep -E "^dahdi-linux-kmod-[0-9]" | awk '{print $1}' | awk -F'-' '{print $4"-"$5}' | sort -n | tail -1)
 kernel_version=$(uname -r | cut -d'-' -f1-2)
 
-message " You are installing FreePBX 17 on kernel $kernel_version."
-message " Please note that if you have plan to use DAHDI then:"
-message " Ensure that you either choose DAHDI option so script will configure DAHDI"
-message "                                  OR"
-message " Ensure you are running a DAHDI supported Kernel. Current latest supported kernel version is $lat_dahdi_supp_ver."
+message " Está instalando FreePBX 17 en la versión $kernel_version del kernel de Linux."
+message " Por favor, tenga en cuenta que si planea usar DAHDI entonces debe:"
+message " Asegurarse de que especificó la opción DAHDI para que el script la configure automáticamente"
+message "                                  O"
+message " Asegurarse de que está corriendo un kernel soportado por DAHDI. La última versión de kernel soportada es $lat_dahdi_supp_ver."
 
 if [ "$dahdi" ]; then
-    setCurrentStep "Making sure we allow only proper kernel upgrade and version installation"
+    setCurrentStep "Asegurándose de permitir solamente las actualizaciones del kernel más apropiadas"
     check_kernel_compatibility "$kernel_version"
 fi
 
-setCurrentStep "Updating repository"
+setCurrentStep "Actualizando lista de paquetes"
 apt-get update >> "$log"
 
 # log the apt-cache policy
@@ -870,7 +870,7 @@ if [ "$nochrony" != true ]; then
 fi
 
 # Install dependent packages
-setCurrentStep "Installing required packages"
+setCurrentStep "Instalando paquetes requeridos"
 DEPPRODPKGS=(
 	"redis-server"
 	"ghostscript"
@@ -1029,7 +1029,7 @@ for i in "${!DEPPKGS[@]}"; do
 done
 
 if  dpkg -l | grep -q 'postfix'; then
-    warning_message="# WARNING: Changing the inet_interfaces to an IP other than 127.0.0.1 may expose Postfix to external network connections.\n# Only modify this setting if you understand the implications and have specific network requirements."
+    warning_message="# ADVERTENCIA: Cambiar las inet_interfaces a otra IP diferente de 127.0.0.1 podría exponer a Postfix a conexiones de red externas.\n# Solo debe cambiar esta configuración si entiende las implicaciones de hacerlo y tiene requerimientos de red muy específicos."
 
     if ! grep -q "WARNING: Changing the inet_interfaces" /etc/postfix/main.cf; then
         # Add the warning message above the inet_interfaces configuration
@@ -1051,7 +1051,7 @@ rm -f /etc/openvpn/easyrsa3/vars
 
 # Install Dahdi card support if --dahdi option is provided
 if [ "$dahdi" ]; then
-    message "Installing DAHDI card support..."
+    message "Instalando el soporte de la tarjeta DAHDI..."
     DAHDIPKGS=("asterisk${ASTVERSION}-dahdi"
            "dahdi-firmware"
            "dahdi-linux"
@@ -1072,21 +1072,21 @@ fi
 
 # Install libfdk-aac2
 if [ "$noaac" ] ; then
-	message "Skipping libfdk-aac2 installation due to noaac option"
+	message "Saltando la instalación de libfdk-aac2 debido a la opción noaac especificada"
 else
 	pkg_install libfdk-aac2
 fi
 
-setCurrentStep "Removing unnecessary packages"
+setCurrentStep "Eliminando paquetes innecesarios"
 apt-get autoremove -y >> "$log"
 
 execution_time="$(($(date +%s) - start))"
-message "Execution time to install all the dependent packages : $execution_time s"
+message "Tiempo de ejecución de la instalación de todos los paquetes de dependencias: $execution_time s"
 
 
 
 
-setCurrentStep "Setting up folders and asterisk config"
+setCurrentStep "Creando las carpetas y la configuración de Asterisk"
 groupExists="$(getent group asterisk || echo '')"
 if [ "${groupExists}" = "" ]; then
 	groupadd -r asterisk
@@ -1200,16 +1200,16 @@ fi
 
 # Install Asterisk
 if [ "$noast" ] ; then
-	message "Skipping Asterisk installation due to noasterisk option"
+	message "Saltando la instalación de Asterisk  debido a la opción noasterisk especificada"
 else
 	# TODO Need to check if asterisk installed already then remove that and install new ones.
 	# Install Asterisk
-	setCurrentStep "Installing Asterisk packages."
+	setCurrentStep "Instalando los paquetes de Asterisk."
 	install_asterisk $ASTVERSION
 fi
 
 # Install PBX dependent packages
-setCurrentStep "Installing FreePBX packages"
+setCurrentStep "Instalando los paquetes de FreePBX."
 
 FPBXPKGS=("sysadmin17"
 	   "sangoma-pbx17"
@@ -1221,7 +1221,7 @@ done
 
 
 #Enabling freepbx.ini file
-setCurrentStep "Enabling modules."
+setCurrentStep "Habilitando módulos."
 phpenmod freepbx
 mkdir -p /var/lib/php/session
 
@@ -1233,25 +1233,25 @@ touch /etc/asterisk/extensions_additional.conf
 touch /etc/asterisk/extensions_custom.conf
 chown -R asterisk:asterisk /etc/asterisk
 
-setCurrentStep "Restarting fail2ban"
+setCurrentStep "Reiniciando fail2ban"
 systemctl restart fail2ban  >> "$log"
 
 
 if [ "$nofpbx" ] ; then
-  message "Skipping FreePBX 17 installation due to nofreepbx option"
+  message "Saltando la instalación de FreePBX 17 debido a la opción nofreepbx especificada"
 else
-  setCurrentStep "Installing FreePBX 17"
+  setCurrentStep "Instalando FreePBX 17"
   pkg_install ioncube-loader-82
   pkg_install freepbx17
 
   if [ -n "$NPM_MIRROR" ] ; then
-    setCurrentStep "Setting environment variable npm_config_registry=$NPM_MIRROR"
+    setCurrentStep "Estableciendo el valor de la variable de entorno npm_config_registry=$NPM_MIRROR"
     export npm_config_registry="$NPM_MIRROR"
   fi
 
   # Check if only opensource required then remove the commercial modules
   if [ "$opensourceonly" ]; then
-    setCurrentStep "Removing commercial modules"
+    setCurrentStep "Eliminando los módulos comerciales"
     /usr/sbin/fwconsole ma list | awk '/Commercial/ {print $2}' | xargs -t -I {} /usr/sbin/fwconsole ma -f remove {} >> "$log"
     # Remove firewall module also because it depends on commercial sysadmin module
     /usr/sbin/fwconsole ma -f remove firewall >> "$log" || true
@@ -1262,27 +1262,27 @@ else
     echo 'export PERL5LIB=$PERL5LIB:/etc/wanpipe/wancfg_zaptel' | sudo tee -a /root/.bashrc
   fi
 
-  setCurrentStep "Installing all local modules"
+  setCurrentStep "Instalando todos los módulos locales"
   /usr/sbin/fwconsole ma installlocal >> "$log"
 
-  setCurrentStep "Upgrading FreePBX 17 modules"
+  setCurrentStep "Actualizando los módulos de FreePBX 17"
   /usr/sbin/fwconsole ma upgradeall >> "$log"
 
-  setCurrentStep "Reloading and restarting FreePBX 17"
+  setCurrentStep "Recargando la configuración y reiniciando FreePBX 17"
   /usr/sbin/fwconsole reload >> "$log"
   /usr/sbin/fwconsole restart >> "$log"
 
   if [ "$opensourceonly" ]; then
     # Uninstall the sysadmin helper package for the sysadmin commercial module
-    message "Uninstalling sysadmin17"
+    message "Desinstalando sysadmin17"
     apt-get purge -y sysadmin17 >> "$log"
     # Uninstall ionCube loader required for commercial modules and to install the freepbx17 package
-    message "Uninstalling ioncube-loader-82"
+    message "Desinstalando ioncube-loader-82"
     apt-get purge -y ioncube-loader-82 >> "$log"
   fi
 fi
 
-setCurrentStep "Wrapping up the installation process"
+setCurrentStep "Terminando el proceso de instalación"
 systemctl daemon-reload >> "$log"
 if [ ! "$nofpbx" ] ; then
   systemctl enable freepbx >> "$log"
@@ -1325,13 +1325,13 @@ sed -i 's/;pcre.jit=1/pcre.jit=0/' /etc/php/${PHPVERSION}/apache2/php.ini
 # Restart apache2
 systemctl restart apache2 >> "$log"
 
-setCurrentStep "Holding Packages"
+setCurrentStep "Marcando paquetes a ser mantenidos"
 
 hold_packages
 
 # Update logrotate configuration
 if grep -q '^#dateext' /etc/logrotate.conf; then
-   message "Setting up logrotate.conf"
+   message "Configurando logrotate.conf"
    sed -i 's/^#dateext/dateext/' /etc/logrotate.conf
 fi
 
@@ -1342,7 +1342,7 @@ chown -R asterisk:asterisk /var/www/html/
 create_post_apt_script
 
 # Refresh signatures
-setCurrentStep "Refreshing modules signatures."
+setCurrentStep "Actualizando las firmas de los módulos."
 count=1
 if [ ! "$nofpbx" ]; then
   while [ $count -eq 1 ]; do
@@ -1353,23 +1353,23 @@ if [ ! "$nofpbx" ]; then
     if [ $exit_status -eq 0 ]; then
       break
     else
-      log "Command '/usr/sbin/fwconsole ma refreshsignatures' failed to execute with exit status $exit_status, running as a background job"
+      log "Falló la ejecución del comando '/usr/sbin/fwconsole ma refreshsignatures' con código de error $exit_status, ejecutándose en segundo plano"
       refresh_signatures &
-      log "Continuing the remaining script execution"
+      log "Continuando la ejecución del script"
       break
     fi
   done
 fi
 
 
-setCurrentStep "FreePBX 17 Installation finished successfully."
+setCurrentStep "Instalación de FreePBX 17 finalizada satisfactoriamente."
 
 
 ############ POST INSTALL VALIDATION ############################################
 # Commands for post-installation validation
 # Disable automatic script termination upon encountering non-zero exit code to prevent premature termination.
 set +e
-setCurrentStep "Post-installation validation"
+setCurrentStep "Validación Post-instalación"
 
 check_services
 
@@ -1382,9 +1382,9 @@ fi
 check_asterisk
 
 execution_time="$(($(date +%s) - start))"
-message "Total script Execution Time: $execution_time"
-message "Finished FreePBX 17 installation process for $host $kernel"
-message "Join us on the FreePBX Community Forum: https://community.freepbx.org/ ";
+message "Tiempo de Ejecución Total del Script: $execution_time"
+message "Finalizado el proceso de instalación de FreePBX 17 en $host $kernel"
+message "Visite el Foro de la Comunidad FreePBX: https://community.freepbx.org/ ";
 
 if [ ! "$nofpbx" ] ; then
   /usr/sbin/fwconsole motd
