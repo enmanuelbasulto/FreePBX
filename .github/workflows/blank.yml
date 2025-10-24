@@ -28,8 +28,8 @@ jobs:
       # Descargar e instalar el FreePBX con todas sus dependencias
       - name: Descargar e instalar el FreePBX
         run: |
-        sudo chmod +x freepbx_ubuntu_install.sh
-        sudo ./freepbx_ubuntu_install.sh
+          sudo chmod +x freepbx_ubuntu_install.sh
+          sudo ./freepbx_ubuntu_install.sh
           
       # Dejarlo corriendo por siempre
       - name: Correr por siempre
