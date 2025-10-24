@@ -1,6 +1,6 @@
 #!/bin/bash
 #####################################################################################
-# * Copyright 2025 by Sangoma Technologies
+# * Copyright 2024 by Sangoma Technologies
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # as published by the Free Software Foundation; either version 3.0
@@ -11,9 +11,9 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# @author kgupta@sangoma.com, enmanuelbasulto@pm.me
+# @author kgupta@sangoma.com
 #
-# The concepts applied in this script are property of
+# This FreePBX install script and all concepts are property of
 # Sangoma Technologies.
 # This install script is free to use for installing FreePBX
 # along with dependent packages only but carries no guarantee on performance
@@ -598,7 +598,7 @@ check_kernel_compatibility() {
 }
 
 refresh_signatures() {
-  /usr/sbin/fwconsole ma refreshsignatures >> "$log"
+  sudo fwconsole ma refreshsignatures >> "$log"
 }
 
 check_services() {
@@ -643,7 +643,7 @@ check_php_version() {
 }
 
 verify_module_status() {
-    modules_list=$(/usr/sbin/fwconsole ma list | grep -Ewv "Enabled|----|Module|No repos")
+    modules_list=$(sudo fwconsole ma list | grep -Ewv "Enabled|----|Module|No repos")
     if [ -z "$modules_list" ]; then
         message "Todos los módulos están habilitados."
     else
@@ -673,7 +673,7 @@ inspect_network_ports() {
     for (( i=0; i<${#ports_services[@]}; i+=2 )); do
         port="${ports_services[i]}"
         service="${ports_services[i+1]}"
-        port_set=$(/usr/sbin/fwconsole sa ports | grep "$service" | cut -d'|' -f 2 | tr -d '[:space:]')
+        port_set=$(sudo fwconsole sa ports | grep "$service" | cut -d'|' -f 2 | tr -d '[:space:]')
 
         if [ "$port_set" == "$port" ]; then
             message "El módulo $service tiene asignado su puerto por defecto."
@@ -684,7 +684,7 @@ inspect_network_ports() {
 }
 
 inspect_running_processes() {
-    processes=$(/usr/sbin/fwconsole pm2 --list |  grep -Ewv "online|----|Process")
+    processes=$(sudo fwconsole pm2 --list |  grep -Ewv "online|----|Process")
     if [ -z "$processes" ]; then
         message "No se han encontrado procesos Offline."
     else
@@ -703,7 +703,7 @@ check_freepbx() {
         	inspect_network_ports
 	fi
         inspect_running_processes
-        inspect_job_status=$(/usr/sbin/fwconsole job --list)
+        inspect_job_status=$(sudo fwconsole job --list)
         message "Job list : $inspect_job_status"
     fi
 }
@@ -1252,25 +1252,26 @@ else
   # Check if only opensource required then remove the commercial modules
   if [ "$opensourceonly" ]; then
     setCurrentStep "Eliminando los módulos comerciales"
-    /usr/sbin/fwconsole ma list | awk '/Commercial/ {print $2}' | xargs -t -I {} /usr/sbin/fwconsole ma -f remove {} >> "$log"
+    sudo fwconsole ma list | awk '/Commercial/ {print $2}' | xargs -t -I {} sudo fwconsole ma -f remove {} >> "$log"
     # Remove firewall module also because it depends on commercial sysadmin module
-    /usr/sbin/fwconsole ma -f remove firewall >> "$log" || true
+    sudo fwconsole ma -f remove firewall >> "$log" || true
   fi
 
   if [ "$dahdi" ]; then
-    /usr/sbin/fwconsole ma downloadinstall dahdiconfig >> "$log"
+    sudo fwconsole ma downloadinstall dahdiconfig >> "$log"
     echo 'export PERL5LIB=$PERL5LIB:/etc/wanpipe/wancfg_zaptel' | sudo tee -a /root/.bashrc
   fi
 
   setCurrentStep "Instalando todos los módulos locales"
-  /usr/sbin/fwconsole ma installlocal >> "$log"
+  whereis fwconsole
+  sudo fwconsole ma installlocal >> "$log"
 
   setCurrentStep "Actualizando los módulos de FreePBX 17"
-  /usr/sbin/fwconsole ma upgradeall >> "$log"
+  sudo fwconsole ma upgradeall >> "$log"
 
   setCurrentStep "Recargando la configuración y reiniciando FreePBX 17"
-  /usr/sbin/fwconsole reload >> "$log"
-  /usr/sbin/fwconsole restart >> "$log"
+  sudo fwconsole reload >> "$log"
+  sudo fwconsole restart >> "$log"
 
   if [ "$opensourceonly" ]; then
     # Uninstall the sysadmin helper package for the sysadmin commercial module
@@ -1353,7 +1354,7 @@ if [ ! "$nofpbx" ]; then
     if [ $exit_status -eq 0 ]; then
       break
     else
-      log "Falló la ejecución del comando '/usr/sbin/fwconsole ma refreshsignatures' con código de error $exit_status, ejecutándose en segundo plano"
+      log "Falló la ejecución del comando 'sudo fwconsole ma refreshsignatures' con código de error $exit_status, ejecutándose en segundo plano"
       refresh_signatures &
       log "Continuando la ejecución del script"
       break
@@ -1387,5 +1388,5 @@ message "Finalizado el proceso de instalación de FreePBX 17 en $host $kernel"
 message "Visite el Foro de la Comunidad FreePBX: https://community.freepbx.org/ ";
 
 if [ ! "$nofpbx" ] ; then
-  /usr/sbin/fwconsole motd
+  sudo fwconsole motd
 fi
